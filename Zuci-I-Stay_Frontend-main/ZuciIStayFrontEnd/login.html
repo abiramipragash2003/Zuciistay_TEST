@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in</title>
+  <link rel="stylesheet" href="styleLogin.css">
+  <style>
+    .error-message {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="title-text">
+      <div class="title login">Login Form</div>
+      <div class="title signup">Signup Form</div>
+    </div>
+    <div class="form-container">
+      <div class="slide-controls">
+        <input type="radio" name="slide" id="login" checked>
+        <input type="radio" name="slide" id="signup">
+        <label for="login" class="slide login">Login</label>
+        <label for="signup" class="slide signup">Signup</label>
+        <div class="slider-tab"></div>
+      </div>
+      <div class="form-inner">
+        <form id="login-form" class="login">
+          <div class="field">
+            <input type="text" id="login-username" placeholder="User Name" required >
+
+          </div>
+          <div class="field">
+            <input type="password" id="login-password" placeholder="Password" required minlength="6">
+          </div>
+          <div class="field btn">
+            <div class="btn-layer"></div>
+            <input type="submit"  value="Login">
+          </div>
+          <div class="signup-link">Not a member? <a href="">Signup now</a></div>
+          <p id="login-error-message" style="color: red; display: none;">Invalid username or password. Please check your credentials.</p>
+        </form>
+        <form id="signup-form" class="signup">
+          <div class="field">
+            <input type="email" id="signup-email" placeholder="Email Address" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+
+          </div>
+          <div class="field">
+            <input type="text" id="signup-username" placeholder="User Name" required pattern="[a-zA-Z\s]+" title="Name must contain only alphabets and spaces">
+          </div>
+          <div class="field">
+            <input type="password" id="signup-password" placeholder="Password" required minlength="6" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" title="Password must be at least 6 characters long and contain at least one digit, one lowercase letter, and one uppercase letter">
+          </div>        
+          <div class="field">
+            <input type="tel" id="signup-mobile" placeholder="Mobile Number" required pattern="\d{10}" title="Mobile number must be 10 digits">
+          </div>
+          <div class="field btn">
+            <div class="btn-layer"></div>
+            <input type="submit" id="signups-submit" value="Signup">
+          </div>
+        </form>
+        <div id="error-message" class="error-message"></div> <!-- Error message container -->
+      </div>
+    </div>
+  </div>
+  <script src="./app.js"></script>
+  <!-- <script>
+    function redirectLogin() {
+      // Redirect to the login form after submitting the signup form
+      document.getElementById('login').checked = true;
+    }
+  </script> -->
+</body>
+</html>

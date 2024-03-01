@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking page</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        .card-container {
+            display:grid;
+            grid-template-columns: repeat(auto-fill, minmax(25%, 1fr));
+            gap: 20px;
+        }
+        .card {
+            border: 2px solid #3B82F6; /* Blue color border */
+        }
+    </style>
+
+</head>
+
+<body class="bg-white">
+    <div id="navbar-placeholder"></div>
+    <div class="background-overlay"></div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Sequential Dropdowns -->
+        <div class="mb-8">
+            <div class="flex justify-center items-center">
+                <div class="w-1/6">
+                    <label for="places" class="block text-sm font-medium text-gray-700">Select Place:</label>
+                    <select id="places" name="places" class="mt-1 p-2 border border-gray-300 rounded-md">
+                        <!-- Options will be dynamically added here -->
+                    </select>
+                </div>
+                <div class="w-1/6 ml-4">
+                    <label for="hotels" class="block text-sm font-medium text-gray-700">Select Hotel:</label>
+                    <select id="hotels" name="hotels" class="mt-1 p-2 border border-gray-300 rounded-md" disabled>
+                        <!-- Options will be dynamically added here -->
+                    </select>
+                </div>
+                <div class="w-1/6 ml-4">
+                    <label for="rooms" class="block text-sm font-medium text-gray-700">Select RoomType:</label>
+                    <select id="rooms" name="rooms" class="mt-1 p-2 border border-gray-300 rounded-md" disabled>
+                        <!-- Options will be dynamically added here -->
+                    </select>
+                </div>
+                <div class="w-1/6 ml-4">
+                    <label for="fromDate" class="block text-sm font-medium text-gray-700">Select From Date:</label>
+                    <input type="date" id="fromDate" name="fromDate" class="mt-1 p-2 border border-gray-300 rounded-md" disabled>
+                </div>
+                <div class="w-1/6 ml-4">
+                    <label for="toDate" class="block text-sm font-medium text-gray-700">Select To Date:</label>
+                    <input type="date" id="toDate" name="toDate" class="mt-1 p-2 border border-gray-300 rounded-md" disabled>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-center">
+            <button id="submitBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" disabled>
+                Book
+            </button>
+        </div>
+    </div>
+
+    <!-- Content for integrating navigation bar HTML -->
+    <script>
+        fetch("navbar.html")
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('navbar-placeholder').innerHTML = html;
+            });
+    </script>
+
+<script>
+    // Function to decode JWT token
+    function decodeToken(token) {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload).sub;
+    }
+
+    // Function to fetch places for a specific user
+    async function fetchPlaces(token) {
+        const apiUrl = 'http://localhost:9090/places';
+
+        try {
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch places');
+            }
+
+            const places = await response.json();
+            return places;
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        // Fetch places using the token stored during login
+        const token = localStorage.getItem("token");
+        const username = decodeToken(token);
+
+        const places = await fetchPlaces(token);
+
+        // Display places in the first dropdown
+        const placesDropdown = document.getElementById('places');
+        placesDropdown.innerHTML = '<option value="" disabled selected>Select place</option>';
+        places.forEach(elements => {
+            const option = document.createElement('option');
+            option.value = elements.place;
+            option.text = elements.place;
+            placesDropdown.add(option);
+        });
+
+        // Enable the hotel dropdown when a place is selected
+        placesDropdown.addEventListener('change', function () {
+            const hotelsDropdown = document.getElementById('hotels');
+            hotelsDropdown.disabled = false;
+
+            // Display hotels for the selected place in the second dropdown
+            const selectedPlace = places.find(place => place.place === placesDropdown.value);
+            hotelsDropdown.innerHTML = '<option value="" disabled selected>Select Hotel</option>';
+            selectedPlace.hotel.forEach(hotel => {
+                const option = document.createElement('option');
+                option.value = hotel.hotelName;
+                option.text = hotel.hotelName;
+                hotelsDropdown.add(option);
+            });
+        });
+
+        // Enable the room dropdown when a hotel is selected
+        const hotelsDropdown = document.getElementById('hotels');
+        hotelsDropdown.addEventListener('change', function () {
+            const roomsDropdown = document.getElementById('rooms');
+            roomsDropdown.disabled = false;
+
+            // Display room types for the selected hotel in the third dropdown
+            const selectedPlace = places.find(place => place.place === placesDropdown.value);
+            const selectedHotel = selectedPlace.hotel.find(hotel => hotel.hotelName === hotelsDropdown.value);
+            roomsDropdown.innerHTML = '<option value="" disabled selected>Select Room Type</option>';
+            selectedHotel.rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.roomType;
+                option.text = room.roomType;
+                roomsDropdown.add(option);
+            });
+        });
+
+        // Enable the date inputs when a room type is selected
+        const roomsDropdown = document.getElementById('rooms');
+        roomsDropdown.addEventListener('change', function () {
+            const fromDateInput = document.getElementById('fromDate');
+            const toDateInput = document.getElementById('toDate');
+            fromDateInput.disabled = false;
+            toDateInput.disabled = false;
+
+            // Set the minimum date for the "From" date input to today
+            fromDateInput.min = new Date().toISOString().split('T')[0];
+
+            // Set the minimum date for the "To" date input to the selected "From" date
+            fromDateInput.addEventListener('change', function () {
+                toDateInput.min = fromDateInput.value;
+            });
+        });
+
+        // Enable the submit button when both date inputs are filled
+        const fromDateInput = document.getElementById('fromDate');
+        const toDateInput = document.getElementById('toDate');
+        const submitBtn = document.getElementById('submitBtn');
+        [fromDateInput, toDateInput].forEach(input => {
+            input.addEventListener('change', function () {
+                // Check if the selected dates are valid (not in the past)
+                const fromDate = new Date(fromDateInput.value);
+                const toDate = new Date(toDateInput.value);
+                const today = new Date();
+                fromDate.setHours(0,0,0,0)
+                toDate.setHours(0,0,0,0)
+                today.setHours(0,0,0,0)
+                console.log(fromDate)
+                console.log(toDate)
+                console.log(today)
+                if (fromDate >= today || toDate >= fromDate) 
+                {
+                    submitBtn.disabled = !fromDateInput.value || !toDateInput.value;
+                } 
+                // else  
+                // {
+                    
+                //     alert("please select valid date")
+                //     submitBtn.disabled = false;
+                    
+                // }
+            });
+        });
+
+        // Handle form submission
+        submitBtn.addEventListener('click', async function () {
+            const selectedPlace = places.find(place => place.place === placesDropdown.value);
+            const selectedHotel = selectedPlace.hotel.find(hotel => hotel.hotelName === hotelsDropdown.value);
+            const selectedRoomType = selectedHotel.rooms.find(room => room.roomType === roomsDropdown.value);
+
+            const bookingData = {
+                username: username,
+                place: selectedPlace.place,
+                hotelName: selectedHotel.hotelName,
+                roomType: selectedRoomType.roomType,
+                fromDate: fromDateInput.value,
+                toDate: toDateInput.value
+            };
+
+            // Make a POST request to the /booking API to check availability
+            const checkApiUrl = 'http://localhost:9090/booking';
+            try {
+                const checkResponse = await fetch(checkApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                if (!checkResponse.ok) {
+                    throw new Error('Failed to check availability');
+                }
+
+                const availabilityResult = await checkResponse.json();
+
+                if (availabilityResult) {
+                    // Room is available, proceed to store the booking
+                    const storeApiUrl = 'http://localhost:9090/bookingAdd';
+                    const storeResponse = await fetch(storeApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(bookingData)
+                    });
+
+                    if (!storeResponse.ok) {
+                        throw new Error('Failed to store booking');
+                    }
+
+                    const storeResult = await storeResponse.json();
+
+                    if (storeResult) 
+                    {
+                        // Booking successful
+                        //alert('Booking successful!');
+                        const newbooktab=document.getElementById("submitBtn")
+                        newbooktab.style.display="none"
+                        const div=document.createElement('div')
+                        
+                        div.className="pop"
+                        const info=document.createElement('p')
+                        info.innerText=" Booked Successfully \n Your BookingId: "+storeResult.bookingId
+                        const layout=document.getElementsByClassName("flex justify-center")[1]
+                        console.log(layout)
+                        div.appendChild(info)
+
+                        layout.appendChild(div)
+                        
+                        
+
+                    } 
+                    else {
+                        // No room available
+                        alert('No room available');
+                    }
+                } else {
+                    // No room available
+                    alert('No room available');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    });
+</script>
+
+
+</body>
+
+</html>
